@@ -1,0 +1,42 @@
+shinyUI(fluidPage(
+  titlePanel("Text Mining App"),
+  sidebarLayout(
+    sidebarPanel( " ",
+                  textInput('dest1', label = 'Enter full path with filename for document'),
+                  textInput('servername', label = 'Enter external url for downloading documents'),
+                  actionButton("submitserverName", "Submit"),
+                  tags$div(
+                    
+                    tags$hr()
+                  ),
+                  textInput('dest2', label = 'Enter directory name for downloaded documents'),
+                  textInput('username', label = 'Enter email username '),
+                  passwordInput('password', label = 'Enter password '),
+                  actionButton("submitmail", "Submit")
+                  ),
+    mainPanel("Document Analysis", 
+              h1('The title of some text'), 
+              p('And here is some content that is put into the first paragraph'),
+              p(textOutput('dynamicText'))
+    )
+  )))
+
+
+library(shiny)
+
+# Define server logic required to generate and plot a random distribution
+shinyServer(function(input, output) {
+  observeEvent(input$submitserverName, {
+    download.file(input$servername, input$dest1, mode="wb")
+   
+  }
+  
+  )
+  
+  observeEvent(input$submitmail, {
+    x <- c("python","C:/Users/satyakir779/AnacondaProjects/mailDownloader.py",input$dest2, input$username, input$password)
+    system(paste(x, collapse= " "))
+  }
+  
+  )
+})
