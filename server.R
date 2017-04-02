@@ -2,6 +2,8 @@ library(shiny)
 library(tm)
 library(wordcloud)
 library(RColorBrewer)
+library(ggplot2)
+library(fpc) 
 
 shinyServer(function(input, output) {
   observeEvent(input$submitserverName, {
@@ -13,7 +15,7 @@ shinyServer(function(input, output) {
   }
   )
   observeEvent(input$submitmail, {
-    y <- c('python', 'gmailDownload.py' , input$dest2,input$username,input$password)
+    y <- c('python', 'gmailDownload.py' , input$dest2,input$username,input$password, input$label)
     code2<- system(paste0(y,collapse = ' '))
     if(code2==0){
       ocr(output, paste0(c(input$dest2,'/pdfs'),collapse = ""))
@@ -97,15 +99,54 @@ ocr <- function(output, dest){
   
   v = sort(rowSums(TD), decreasing = TRUE)
   
-  output$plot1 <- renderPlot({wordcloud (data, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0.35, use.r.layout=FALSE, colors=brewer.pal(8, 'Dark2'))})
+ # output$plot1 <- renderPlot({wordcloud (data, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0.35, use.r.layout=FALSE, colors=brewer.pal(8, 'Dark2'))})
+  output$plot1 <- renderPlot({ wordcloud(names(v), v, min.freq=4, scale=c(5, .1), colors=brewer.pal(6, "Dark2"))})
+   
+  df <- data.frame(word = names(v),freq=v)
+  # output$plot2 <- renderPlot({barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
+  #                                     col =rainbow(70), main ="Most frequent words",
+  #                                     ylab = "Word frequencies")})
   
-  m <- as.matrix(tdm)
-  v <- sort(rowSums(m),decreasing=TRUE)
-  d <- data.frame(word = names(v),freq=v)
-  output$plot2 <- renderPlot({barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
-                                      col =rainbow(70), main ="Most frequent words",
-                                      ylab = "Word frequencies")})
+  output$plot2 <- renderPlot({
+    p <- ggplot(subset(df, freq>10), aes(word, freq))
+    p <- p + geom_bar(aes(fill=freq),   # fill depends on cond2
+                      stat="identity",
+                      position=position_dodge())   
+    p <- p + theme(axis.text.x=element_text(angle=45, hjust=1))   
+    p
+  })
   
+  # dtmss <- removeSparseTerms(tdm, 0.15) # This makes a matrix that is only 15% empty space, maximum. 
+  # print(tdm)
+  # ds <- dist(t(tdm), method="euclidian")  
+  # kfit <- kmeans(ds, 3)   
+  # output$plot3 <- renderPlot({
+  #   clusplot(as.matrix(ds), kfit$cluster, color=T, shade=T, labels=3, lines=0) 
+  # })
+  # 
+  # 
+  # dtm_tfxidf <- weightTfIdf(tdm)
+  # 
+  # ## do document clustering
+  # 
+  # ### k-means (this uses euclidean distance)
+  # m <- as.matrix(dtm_tfxidf)
+  # rownames(m) <- 1:nrow(m)
+  # 
+  # ### don't forget to normalize the vectors so Euclidean makes sense
+  # norm_eucl <- function(m) m/apply(m, MARGIN=1, FUN=function(x) sum(x^2)^.5)
+  # m_norm <- norm_eucl(m)
+  # 
+  # 
+  # ### cluster into 10 clusters
+  # cl <- kmeans(m_norm, 3)
+  # cl
+  # 
+  # table(cl$cluster)
+  # 
+  # ### show clusters using the first 2 principal components
+  # 
+  # output$plot3 <- renderPlot({ plot(prcomp(m_norm)$x, col=cl$cl)})
   
   
 }
