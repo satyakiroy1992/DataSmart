@@ -20,6 +20,9 @@ print(userName)
 #passwd = getpass.getpass('Enter your password: ')
 passwd  = sys.argv[3]
 
+emailFolder = sys.argv[4]
+print (emailFolder)
+
 try:
     imapSession = imaplib.IMAP4_SSL('imap.gmail.com')
     typ, accountDetails = imapSession.login(userName, passwd)
@@ -27,7 +30,20 @@ try:
         print ('Not able to sign in!')
         raise
     
-    imapSession.select('[Gmail]/All Mail')
+    label = '[Gmail]/All Mail'
+    if emailFolder:
+        listOfFolders  = imapSession.list()
+        for nameList in listOfFolders :
+            for folder in nameList:
+                if folder.find(emailFolder)!=-1 :
+                    print (label)
+                    label = emailFolder
+                    break
+        if(label == '[Gmail]/All Mail'):
+            print(emailFolder + " not found. Setting to default folder to [Gmail]/All Mail")     
+        
+    print (label)
+    imapSession.select(label)
     typ, data = imapSession.search(None, 'ALL')
     if typ != 'OK':
         print ('Error searching Inbox.')
